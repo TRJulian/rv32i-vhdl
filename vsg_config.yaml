@@ -1,0 +1,69 @@
+---
+# VSG configuration — RV32I VHDL project
+# Apply with: vsg -c vsg_config.yaml -f <file>.vhd
+# Enable in-place fixing with: vsg -c vsg_config.yaml --fix -f <file>.vhd
+
+rule:
+
+  global:
+    indent_size: 2
+
+  # ---- Case: identifiers that are UPPER_SNAKE_CASE ----
+  # Everything else stays lowercase, which is the VSG default.
+
+  generic_007:
+    case: upper          # generic names       -> DATA_WIDTH
+  constant_004:
+    case: upper          # constant names      -> CLK_PERIOD
+  type_500:
+    case: upper          # enum literals       -> ST_IDLE
+  generic_map_002:
+    case: upper          # generic names in a generic map
+
+  # ---- Naming: port direction suffixes (disabled by default in VSG) ----
+
+  port_605:
+    disable: false       # in    ports end in _i
+  port_606:
+    disable: false       # out   ports end in _o
+  port_607:
+    disable: false       # inout ports end in _io
+
+  # ---- Naming: type and label suffixes ----
+
+  type_600:
+    disable: false       # type names end in _t
+  process_600:
+    disable: false       # process labels end in _proc
+
+  instantiation_601:
+    disable: false
+    prefixes:
+      - u_               # instance labels start with u_
+
+  # ---- Allow direct entity instantiation ----
+  # VSG defaults to requiring component instantiation. This project uses
+  # direct entity instantiation deliberately: no duplicated component
+  # declaration to drift out of sync with the entity.
+
+  instantiation_034:
+    disable: true
+
+  # ---- Ban non-standard arithmetic packages ----
+
+  use_clause_001:
+    disable: false
+    names:
+      - std_logic_arith
+      - std_logic_unsigned
+      - std_logic_signed
+
+  # ---- Surface unfinished work ----
+
+  comment_012:
+    disable: false
+    keywords:
+      - TODO
+      - FIXME
+    severity: Warning
+...
