@@ -10,14 +10,14 @@ end entity alu_tb;
 
 architecture tb of alu_tb is
 
-  signal x      : signed(DATA_WIDTH - 1 downto 0);
-  signal y      : signed(DATA_WIDTH - 1 downto 0);
-  signal zx     : std_logic;
-  signal zy     : std_logic;
-  signal nx     : std_logic;
-  signal ny     : std_logic;
-  signal f      : std_logic;
-  signal no     : std_logic;
+  signal x      : signed(DATA_WIDTH - 1 downto 0) := (others => '0');
+  signal y      : signed(DATA_WIDTH - 1 downto 0) := (others => '0');
+  signal zx     : std_logic                       := '0';
+  signal zy     : std_logic                       := '0';
+  signal nx     : std_logic                       := '0';
+  signal ny     : std_logic                       := '0';
+  signal f      : std_logic                       := '0';
+  signal no     : std_logic                       := '0';
   signal output : signed(DATA_WIDTH - 1 downto 0);
   signal zr     : std_logic;
   signal ng     : std_logic;
