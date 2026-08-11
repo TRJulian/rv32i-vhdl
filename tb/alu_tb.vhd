@@ -3,11 +3,12 @@ library ieee;
   use ieee.numeric_std.all;
 
 entity alu_tb is
+  generic (
+    DATA_WIDTH : positive := 4
+  );
 end entity alu_tb;
 
 architecture tb of alu_tb is
-
-  constant DATA_WIDTH : positive := 4;
 
   signal x      : signed(DATA_WIDTH - 1 downto 0);
   signal y      : signed(DATA_WIDTH - 1 downto 0);
@@ -26,6 +27,33 @@ architecture tb of alu_tb is
     M_X, M_Y, INC_X, INC_Y, DEC_X, DEC_Y,
     ADD, SUB_X_Y, SUB_Y_X, AAND, OOR
   );
+
+  type int_array_t is array (natural range <>) of integer;
+
+  function operand_set (
+    w : positive
+  ) return int_array_t is
+
+    variable full : int_array_t(0 to 2 ** w - 1);
+
+  begin
+
+    if (w <= 5) then
+
+      for k in full'range loop
+
+        full(k) := -2 ** (w - 1) + k;
+
+      end loop;
+
+      return full;
+    else
+      return int_array_t'(-2 ** (w - 1), -1, 0, 1, 2 ** (w - 1) - 1);
+    end if;
+
+  end function operand_set;
+
+  constant OPERANDS : int_array_t := operand_set(DATA_WIDTH);
 
   type test_vec_t is record
     zx, zy, nx, ny, f, no : std_logic;
@@ -222,12 +250,15 @@ begin
 
   main_proc : process is
 
-    variable errors : natural;
-    variable failed : boolean;
+    variable errors         : natural;
+    variable failed         : boolean;
+    variable vector_counter : natural;
+    variable expected       : signed(DATA_WIDTH - 1 downto 0);
 
   begin
 
-    errors := 0;
+    errors         := 0;
+    vector_counter := 0;
 
     for i in TESTS'range loop
 
@@ -240,89 +271,95 @@ begin
       f  <= TESTS(i).f;
       no <= TESTS(i).no;
 
-      for j in -2 ** (DATA_WIDTH - 1) to 2 ** (DATA_WIDTH - 1) - 1 loop
+      for j in OPERANDS'range loop
 
-        for l in -2 ** (DATA_WIDTH - 1) to 2 ** (DATA_WIDTH - 1) - 1 loop
+        for l in OPERANDS'range loop
 
-          x <= to_signed(j, DATA_WIDTH);
-          y <= to_signed(l, DATA_WIDTH);
+          vector_counter := vector_counter + 1;
+
+          x <= to_signed(OPERANDS(j), DATA_WIDTH);
+          y <= to_signed(OPERANDS(l), DATA_WIDTH);
           wait for 1 ns;
 
           case TESTS(i).name is
 
             when ZERO =>
 
-              failed := output /= 0;
+              expected := to_signed(0, DATA_WIDTH);
 
             when ONE =>
 
-              failed := output /= 1;
+              expected := to_signed(1, DATA_WIDTH);
 
             when M_ONE =>
 
-              failed := output /= -1;
+              expected := to_signed(-1, DATA_WIDTH);
 
             when XX =>
 
-              failed := output /= x;
+              expected := x;
 
             when YY =>
 
-              failed := output /= y;
+              expected := y;
 
             when NOT_X =>
 
-              failed := output /= not x;
+              expected := not x;
 
             when NOT_Y =>
 
-              failed := output /= not y;
+              expected := not y;
 
             when M_X =>
 
-              failed := output /= -x;
+              expected := -x;
 
             when M_Y =>
 
-              failed := output /= -y;
+              expected := -y;
 
             when INC_X =>
 
-              failed := output /= x + 1;
+              expected := x + 1;
 
             when INC_Y =>
 
-              failed := output /= y + 1;
+              expected := y + 1;
 
             when DEC_X =>
 
-              failed := output /= x - 1;
+              expected := x - 1;
 
             when DEC_Y =>
 
-              failed := output /= y - 1;
+              expected := y - 1;
 
             when ADD =>
 
-              failed := output /= x + y;
+              expected := x + y;
 
             when SUB_X_Y =>
 
-              failed := output /= x - y;
+              expected := x - y;
 
             when SUB_Y_X =>
 
-              failed := output /= y - x;
+              expected := y - x;
 
             when AAND =>
 
-              failed := output /= (x and y);
+              expected := (x and y);
 
             when OOR =>
 
-              failed := output /= (x or y);
+              expected := (x or y);
 
           end case;
+
+          if (output /= expected) then
+            failed := true;
+          end if;
 
           if ((zr = '1') /= (output = 0)) then
             failed := true;
@@ -335,7 +372,8 @@ begin
           if (failed) then
             errors := errors + 1;
             report "FAIL " & test_name_t'image(TESTS(i).name)
-                   & " x=" & integer'image(j) & " y=" & integer'image(l)
+                   & " x=" & integer'image(OPERANDS(j)) & " y=" & integer'image(OPERANDS(l))
+                   & " expected=" & integer'image(to_integer(expected))
                    & " got=" & integer'image(to_integer(output))
               severity error;
           end if;
@@ -347,7 +385,7 @@ begin
     end loop;
 
     if (errors = 0) then
-      report "PASS: all " & integer'image(TESTS'length) & " vectors"
+      report "PASS: all " & integer'image(vector_counter) & " vectors"
         severity note;
     else
       report integer'image(errors) & " failures"
