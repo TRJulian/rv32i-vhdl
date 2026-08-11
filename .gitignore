@@ -1,0 +1,5 @@
+build/
+*.cf
+*.o
+*.ghw
+*.vcd
