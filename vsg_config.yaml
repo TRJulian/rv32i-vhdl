@@ -66,4 +66,17 @@ rule:
       - TODO
       - FIXME
     severity: Warning
+
+  # Signal initial values.
+  #
+  # VSG rejects these because a synthesised design must not depend on
+  # them: most FPGA families encode the value into the bitstream, but
+  # ASIC flows ignore it, so a design that relies on an initial value
+  # instead of a reset is not portable.
+  #
+  # This project's RTL is combinational and declares no signals, so the
+  # rule protects nothing here. Testbenches do need initial values, to
+  # keep 'U' out of the DUT's inputs before the first stimulus.
+  signal_007:
+    disable: true
 ...
