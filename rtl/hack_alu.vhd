@@ -2,7 +2,7 @@ library ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
 
-entity alu is
+entity hack_alu is
   generic (
     DATA_WIDTH : positive := 16
   );
@@ -19,9 +19,9 @@ entity alu is
     zr_o     : out   std_logic;
     ng_o     : out   std_logic
   );
-end entity alu;
+end entity hack_alu;
 
-architecture rtl of alu is
+architecture rtl of hack_alu is
 
 begin
 

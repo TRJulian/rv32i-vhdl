@@ -2,13 +2,13 @@ library ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
 
-entity alu_tb is
+entity hack_alu_tb is
   generic (
     DATA_WIDTH : positive := 4
   );
-end entity alu_tb;
+end entity hack_alu_tb;
 
-architecture tb of alu_tb is
+architecture tb of hack_alu_tb is
 
   signal x      : signed(DATA_WIDTH - 1 downto 0) := (others => '0');
   signal y      : signed(DATA_WIDTH - 1 downto 0) := (others => '0');
@@ -230,7 +230,7 @@ architecture tb of alu_tb is
 
 begin
 
-  u_alu : entity work.alu(rtl)
+  u_alu : entity work.hack_alu(rtl)
     generic map (
       DATA_WIDTH => DATA_WIDTH
     )
