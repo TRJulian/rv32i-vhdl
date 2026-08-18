@@ -15,6 +15,15 @@ RTL_SRCS  ?= $(shell find $(RTL_DIR) -name '*.vhd' | sort)
 TB_SRCS   ?= $(shell find $(TB_DIR) -name '*.vhd' | sort)
 SRCS      := $(RTL_SRCS) $(TB_SRCS)
 
+# Make variables are case-sensitive, so `make sim top=foo` silently leaves TOP
+# at its default and runs the wrong testbench. Catch the common miscasings.
+ifneq ($(origin top),undefined)
+  $(error use TOP=, not top= (make variables are case-sensitive))
+endif
+ifneq ($(origin tb),undefined)
+  $(error use TB=, not tb=)
+endif
+
 GHDL      ?= ghdl
 GHDLFLAGS := --std=$(STD) --workdir=$(BUILD)
 
@@ -36,6 +45,7 @@ elaborate: analyze
 	@$(GHDL) -e $(GHDLFLAGS) $(TB)
 
 sim: elaborate
+	@echo "sim: TOP=$(TOP) TB=$(TB)"
 	@$(GHDL) -r $(GHDLFLAGS) $(TB) $(GENERICS)
 
 wave: elaborate
