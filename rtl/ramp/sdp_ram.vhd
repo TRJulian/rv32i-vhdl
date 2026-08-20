@@ -1,6 +1,7 @@
 library ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
+  use std.textio.all;
 
 -- Implemented separate write and read addresses.
 -- When write enable is asserted and the read address equals the write address, read data presents the pre-write
@@ -11,7 +12,8 @@ library ieee;
 entity sdp_ram is
   generic (
     DATA_WIDTH : positive := 8;
-    ADDR_WIDTH : positive := 8
+    ADDR_WIDTH : positive := 8;
+    INIT_FILE  : string   := ""
   );
   port (
     clk_i          : in    std_logic;
@@ -25,9 +27,70 @@ end entity sdp_ram;
 
 architecture rtl of sdp_ram is
 
-  type mem_array_t is array(natural range <>) of std_logic_vector(DATA_WIDTH - 1 downto 0);
+  type mem_t is array(2 ** ADDR_WIDTH - 1 downto 0) of std_logic_vector(DATA_WIDTH - 1 downto 0);
 
-  signal mem_r : mem_array_t(2 ** ADDR_WIDTH - 1 downto 0);
+  impure function load_hex_file (
+    filename : string
+  ) return mem_t is
+
+    file     f      : text;
+    variable l      : line;
+    variable word   : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    variable ok     : boolean;
+    variable result : mem_t;
+    variable idx    : natural;
+    variable status : file_open_status;
+
+  begin
+
+    if (filename = "") then
+      return result;
+    end if;
+
+    file_open(status, f, filename, read_mode);
+
+    if (status /= open_ok) then
+      report "error: cannot open " & filename
+             & " (status=" & file_open_status'image(status) & ")"
+        severity failure;
+      return result;
+    end if;
+
+    result := (others => (others => '0'));
+    idx    := 0;
+
+    while true loop
+
+      if endfile(f) then
+        report "note: loaded " & integer'image(idx) & " out of "
+               & integer'image(2 ** ADDR_WIDTH) & " possible instructions"
+          severity note;
+        exit;
+      end if;
+
+      if (idx = result'length) then
+        report "error: file load exited prematurely (file too long)"
+          severity failure;
+        return result;
+      end if;
+
+      readline(f, l);
+      hread(l, word, ok);
+
+      assert ok
+        report "error: malformed hex encountered"
+        severity failure;
+
+      result(idx) := word;
+      idx         := idx + 1;
+
+    end loop;
+
+    return result;
+
+  end function load_hex_file;
+
+  signal mem_r : mem_t := load_hex_file(INIT_FILE);
 
 begin
 

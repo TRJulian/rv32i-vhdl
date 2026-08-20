@@ -10,13 +10,14 @@ The repository is at an early stage. It holds ramp modules and their testbenches
 
 `seq_detect_1011`: detects the bit sequence `1011` in a serial stream, including overlapping matches, so the input `1011011` produces two pulses. Registered Mealy, written as one clocked process. Synchronous reset, so reset is an ordinary synchronous input with no recovery/removal constraint and no separate distribution network. `ghdl --synth` reports no inferred latches and 3 flip-flops.
 
-`sdp_ram`: a simple dual-port RAM with a registered, read-first read port, with generic width and depth, built without a reset, because block RAM contents cannot be reset. `ghdl --synth` reports no inferred latches and infers mem_r as RAM with width 8 and depth 256.
+`sdp_ram`: a simple dual-port RAM with a registered, read-first read port, with generic width and depth, built without a reset, because block RAM contents cannot be reset. An `INIT_FILE` generic loads initial contents from a file of hex words at elaboration; the default empty string leaves the array uninitialized. `ghdl --synth` reports no inferred latches and infers `mem_r` as RAM with width 8 and depth 256, with or without initialization.
 
 ## Layout
 
 ```
 rtl/ramp/       synthesizable modules built to develop RTL and verification technique
 tb/ramp/        their self-checking testbenches
+tb/data/        test input files read by testbenches
 build/          GHDL work library (generated, not tracked)
 ```
 
@@ -51,7 +52,9 @@ PASS: all 450 vectors
 sim: TOP=seq_detect_1011 TB=seq_detect_1011_tb
 PASS: all possible 4096 12-bit sequences
 sim: TOP=sdp_ram TB=sdp_ram_tb
-PASS: 2305 memory checks
+note: loaded 256 out of 256 possible instructions
+note: testbench loaded 256 out of 256 possible instructions
+PASS: 2561 memory checks
 ```
 
 The two `hack_alu` runs cover different things: the first sweeps every operand pair at a reduced width, the second applies boundary operands at the full width.
@@ -105,15 +108,21 @@ Stimulus is driven on the falling edge and sampled half a period later, giving 5
 
 Verified with the standard March C- algorithm and address-in-address data. Address-in-address stores each location's own address as its contents, which is what catches address decode aliasing, and it requires DATA_WIDTH >= ADDR_WIDTH. An elaboration assertion enforces that. DATA_WIDTH and ADDR_WIDTH default to 8.
 
-The testbench holds no model of the memory contents, and does not need one. March C- establishes an invariant after each pass, that every location holds a known function of its own address, and each check tests that invariant rather than recomputing what should be there. There is no second implementation that could encode the same misunderstanding as the first.
+For the March C- sweep the testbench holds no model of the memory contents, and does not need one. March C- establishes an invariant after each pass, that every location holds a known function of its own address, and each check tests that invariant rather than recomputing what should be there. There is no second implementation that could encode the same misunderstanding as the first.
 
 The expected value is also self-identifying. A read returning `00000001` where `00000000` was expected names the location that was actually read, which is why every address-decode defect is caught at the first address rather than somewhere deep in the sweep.
 
 The March C- algorithm covers stuck-at and transition faults, while running the tests in both directions catches coupling faults, since an aggressor at address n affects a victim at address n+1 differently than at n-1. This also leads to boundary addresses being covered even though the direction guards skip one end of each pass.
 
-Passed 2305 memory checks: 1280 read checks and 1025 read-during-write collision checks, which verify the read-first contract stated earlier. GHDL reports 0 inferred latches and infers mem_r as a RAM of width 8 and depth 256. 11 mutants injected, 11 killed.
+Passed 2561 memory checks: 1280 read checks, 1025 read-during-write collision checks, and 256 load checks. The collision checks are what verify the read-first contract stated earlier. GHDL reports 0 inferred latches and infers mem_r as a RAM of width 8 and depth 256. 11 mutants injected, 11 killed.
 
 write_addr is deliberately pre-pointed at the next address in the sequence during an idle cycle before each operation pair. That makes an ignored write enable observable, and keeps read_addr and write_addr distinct so that reading from the wrong address port is detectable.
+
+The testbench instantiates two memories. One is left uninitialized and carries the March C- sweep; the other is initialized from `tb/data/sdp_ram_test_program.hex` and is only read. Two instances rather than one, because elaboration-time initialization happens once and the march would overwrite it before it could be checked.
+
+The load check reads the same file a second time in the testbench and compares word by word, so two independent readings of one file are compared rather than one reading being compared against itself. The cost is a parser written twice, whose halves can drift apart; the alternative, a shared parser, would leave the file format interpretation untested by construction.
+
+A missing file, a file longer than the memory, and a non-hexadecimal field each abort with a message naming the problem. A file shorter than the memory zero-fills the remainder and reports how many words were loaded, which is deliberate: a program is normally shorter than the memory holding it. Metavalue characters are legal hex under IEEE 1076-2008, so a word of `ZZ` loads as high impedance without complaint.
 
 ## Tooling and conventions
 
@@ -121,7 +130,7 @@ write_addr is deliberately pre-pointed at the next address in the sequence durin
 - **make** wraps the tool invocations so that flags such as `--workdir` and the VSG configuration path cannot be forgotten. Targets are listed by `make help` rather than enumerated here, so that this file cannot drift from the Makefile.
 - **VSG** enforces layout and naming on every file. `vsg_config.yaml` is committed and is the authoritative statement of the conventions in use; it is deliberately not restated in prose, because a copy drifts as soon as a rule changes. In summary, identifiers encode port direction, type, and whether a signal is driven by a clocked process, and the non-standard `std_logic_arith` package family is rejected.
 - **vhdl_ls.toml** maps both source directories into the `defaultlib` library for the language server and is configured to raise unused declarations to errors.
-- **Yosys** is optional. It is used only by `make stat` and `make schematic`, which report cell counts and draws the netlist that results from synthesis. Nothing else depends on it.
+- **Yosys** is optional. It is used only by `make stat` and `make schematic`, which report cell counts and draw the netlist that results from synthesis. Nothing else depends on it.
 - Modules are instantiated directly as entities rather than through component declarations, so there is no duplicated port list to drift out of sync.
 
 ## Scope
