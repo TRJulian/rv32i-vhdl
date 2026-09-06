@@ -1,7 +1,7 @@
 standard = "2008"
 
 [libraries]
-defaultlib.files = ["rtl/**/*.vhd", "tb/**/*.vhd"]
+defaultlib.files = ["pkg/**/*.vhd", "rtl/**/*.vhd", "tb/**/*.vhd"]
 
 [lint]
 unused = "error"

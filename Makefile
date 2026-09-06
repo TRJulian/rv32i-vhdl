@@ -5,15 +5,17 @@ TB        ?= $(TOP)_tb
 STD       ?= 08
 BUILD     ?= build
 
+PKG_DIR   ?= pkg
 RTL_DIR   ?= rtl
 TB_DIR    ?= tb
 
 # find, not wildcard: wildcard does not recurse, so a nested layout would
 # silently analyse nothing. Sorted for reproducible ordering. If a module ever
 # instantiates another, set RTL_SRCS explicitly in dependency order instead.
-RTL_SRCS  ?= $(shell find $(RTL_DIR) -name '*.vhd' | sort)
-TB_SRCS   ?= $(shell find $(TB_DIR) -name '*.vhd' | sort)
-SRCS      := $(RTL_SRCS) $(TB_SRCS)
+PKG_SRCS ?= $(shell find $(PKG_DIR) $(RTL_DIR) $(TB_DIR) -name '*_pkg.vhd' | sort)
+RTL_SRCS ?= $(shell find $(RTL_DIR) -name '*.vhd' ! -name '*_pkg.vhd' | sort)
+TB_SRCS  ?= $(shell find $(TB_DIR)  -name '*.vhd' ! -name '*_pkg.vhd' | sort)
+SRCS     := $(PKG_SRCS) $(RTL_SRCS) $(TB_SRCS)
 
 # Make variables are case-sensitive, so `make sim top=foo` silently leaves TOP
 # at its default and runs the wrong testbench. Catch the common miscasings.
