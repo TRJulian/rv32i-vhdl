@@ -1,6 +1,6 @@
 # ---- Configuration -----------------------------------------------------------
 
-TOP       ?= seq_detect_1011
+TOP       ?= alu
 TB        ?= $(TOP)_tb
 STD       ?= 08
 BUILD     ?= build
