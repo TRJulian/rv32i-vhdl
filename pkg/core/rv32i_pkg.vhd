@@ -1,13 +1,14 @@
 --------------------------------------------------------------------------------
--- alu_pkg.vhd -- Package for alu module "alu.vhd" & its testbench "alu_tb.vhd"
+-- rv32i_pkg.vhd -- Package for the modules of the rv32i core.
 --------------------------------------------------------------------------------
 
-package alu_pkg is
+package rv32i_pkg is
 
-  type alu_op_t is (OP_ADD, OP_SUB, OP_SLL, OP_XOR, OP_SRL, OP_SRA, OP_OR, OP_AND);
+  type alu_op_t is (ALU_ADD, ALU_SUB, ALU_SLL, ALU_XOR, ALU_SRL, ALU_SRA, ALU_OR, ALU_AND);
 
+  -- RV32I: shifts use the low 5 bits of the second operand.
   constant SHAMT_WIDTH : positive := 5;
 
   subtype alu_width_t is positive range SHAMT_WIDTH to positive'high;
 
-end package alu_pkg;
+end package rv32i_pkg;

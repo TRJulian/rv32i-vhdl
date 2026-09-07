@@ -8,7 +8,7 @@
 library ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
-  use work.alu_pkg.all;
+  use work.rv32i_pkg.all;
 
 entity alu is
   generic (
@@ -27,16 +27,16 @@ architecture rtl of alu is
 begin
 
   with alu_op_i select alu_res_o <=
-    std_logic_vector(signed(src_a_i) + signed(src_b_i)) when OP_ADD,
-    std_logic_vector(signed(src_a_i) - signed(src_b_i)) when OP_SUB,
+    std_logic_vector(signed(src_a_i) + signed(src_b_i)) when ALU_ADD,
+    std_logic_vector(signed(src_a_i) - signed(src_b_i)) when ALU_SUB,
     std_logic_vector(shift_left(unsigned(src_a_i),
-        to_integer(unsigned(src_b_i(SHAMT_WIDTH - 1 downto 0))))) when OP_SLL,
-    src_a_i xor src_b_i when OP_XOR,
+        to_integer(unsigned(src_b_i(SHAMT_WIDTH - 1 downto 0))))) when ALU_SLL,
+    src_a_i xor src_b_i when ALU_XOR,
     std_logic_vector(shift_right(unsigned(src_a_i),
-        to_integer(unsigned(src_b_i(SHAMT_WIDTH - 1 downto 0))))) when OP_SRL,
+        to_integer(unsigned(src_b_i(SHAMT_WIDTH - 1 downto 0))))) when ALU_SRL,
     std_logic_vector(shift_right(signed(src_a_i),
-        to_integer(unsigned(src_b_i(SHAMT_WIDTH - 1 downto 0))))) when OP_SRA,
-    src_a_i or src_b_i when OP_OR,
-    src_a_i and src_b_i when OP_AND;
+        to_integer(unsigned(src_b_i(SHAMT_WIDTH - 1 downto 0))))) when ALU_SRA,
+    src_a_i or src_b_i when ALU_OR,
+    src_a_i and src_b_i when ALU_AND;
 
 end architecture rtl;

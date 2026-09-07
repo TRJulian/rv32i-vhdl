@@ -10,7 +10,7 @@ library ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
   use std.textio.all;
-  use work.alu_pkg.all;
+  use work.rv32i_pkg.all;
 
 entity alu_tb is
   generic (
@@ -107,38 +107,38 @@ architecture tb of alu_tb is
 
           case op is
 
-            when OP_ADD =>
+            when ALU_ADD =>
 
               expected := std_logic_vector(signed(src_a_p) + signed(src_b_p));
 
-            when OP_SUB =>
+            when ALU_SUB =>
 
               expected := std_logic_vector(signed(src_a_p) - signed(src_b_p));
 
-            when OP_SLL =>
+            when ALU_SLL =>
 
               expected := std_logic_vector(shift_left(unsigned(src_a_p),
                                                       to_integer(unsigned(src_b_p(SHAMT_WIDTH - 1 downto 0)))));
 
-            when OP_XOR =>
+            when ALU_XOR =>
 
               expected := src_a_p xor src_b_p;
 
-            when OP_SRL =>
+            when ALU_SRL =>
 
               expected := std_logic_vector(shift_right(unsigned(src_a_p),
                                                        to_integer(unsigned(src_b_p(SHAMT_WIDTH - 1 downto 0)))));
 
-            when OP_SRA =>
+            when ALU_SRA =>
 
               expected := std_logic_vector(shift_right(signed(src_a_p),
                                                        to_integer(unsigned(src_b_p(SHAMT_WIDTH - 1 downto 0)))));
 
-            when OP_OR =>
+            when ALU_OR =>
 
               expected := src_a_p or src_b_p;
 
-            when OP_AND =>
+            when ALU_AND =>
 
               expected := src_a_p and src_b_p;
 
@@ -194,15 +194,15 @@ architecture tb of alu_tb is
 
         when 0 =>
 
-          op := OP_SLL;
+          op := ALU_SLL;
 
         when 1 =>
 
-          op := OP_SRL;
+          op := ALU_SRL;
 
         when 2 =>
 
-          op := OP_SRA;
+          op := ALU_SRA;
 
       end case;
 
@@ -221,17 +221,17 @@ architecture tb of alu_tb is
 
           case op is
 
-            when OP_SLL =>
+            when ALU_SLL =>
 
               expected := std_logic_vector(shift_left(unsigned(src_a_p),
                                                       to_integer(unsigned(src_b_p(SHAMT_WIDTH - 1 downto 0)))));
 
-            when OP_SRL =>
+            when ALU_SRL =>
 
               expected := std_logic_vector(shift_right(unsigned(src_a_p),
                                                        to_integer(unsigned(src_b_p(SHAMT_WIDTH - 1 downto 0)))));
 
-            when OP_SRA =>
+            when ALU_SRA =>
 
               expected := std_logic_vector(shift_right(signed(src_a_p),
                                                        to_integer(unsigned(src_b_p(SHAMT_WIDTH - 1 downto 0)))));
@@ -299,15 +299,15 @@ architecture tb of alu_tb is
         src_a_p <= std_logic_vector(to_signed(OPERANDS(a_idx), w_p));
         src_b_p <= std_logic_vector(to_signed(OPERANDS(b_idx), w_p));
 
-        alu_op_p <= OP_SLL;
+        alu_op_p <= ALU_SLL;
         wait for 1 ns;
         r_sll    := alu_res_p;
 
-        alu_op_p <= OP_SRL;
+        alu_op_p <= ALU_SRL;
         wait for 1 ns;
         r_srl    := alu_res_p;
 
-        alu_op_p <= OP_SRA;
+        alu_op_p <= ALU_SRA;
         wait for 1 ns;
         r_sra    := alu_res_p;
 
