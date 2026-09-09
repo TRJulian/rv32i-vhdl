@@ -1,6 +1,5 @@
 # ---- Configuration -----------------------------------------------------------
 
-TOP       ?= alu
 TB        ?= $(TOP)_tb
 STD       ?= 08
 BUILD     ?= build
@@ -17,13 +16,23 @@ RTL_SRCS ?= $(shell find $(RTL_DIR) -name '*.vhd' ! -name '*_pkg.vhd' | sort)
 TB_SRCS  ?= $(shell find $(TB_DIR)  -name '*.vhd' ! -name '*_pkg.vhd' | sort)
 SRCS     := $(PKG_SRCS) $(RTL_SRCS) $(TB_SRCS)
 
-# Make variables are case-sensitive, so `make sim top=foo` silently leaves TOP
-# at its default and runs the wrong testbench. Catch the common miscasings.
+# Make variables are case-sensitive, so `make sim top=foo` would otherwise
+# silently leave TOP unset. Catch the common miscasings.
 ifneq ($(origin top),undefined)
   $(error use TOP=, not top= (make variables are case-sensitive))
 endif
 ifneq ($(origin tb),undefined)
   $(error use TB=, not tb=)
+endif
+
+# TOP has no default. A default still runs a testbench and still prints a green
+# result when TOP is forgotten, and a green result from the wrong target stops
+# investigation in a way a red one never does.
+NEEDS_TOP := analyze elaborate sim wave synth netlist ff stat schematic check
+ifneq ($(filter $(NEEDS_TOP),$(MAKECMDGOALS)),)
+  ifndef TOP
+    $(error TOP is not set. Use: make $(firstword $(MAKECMDGOALS)) TOP=<module>)
+  endif
 endif
 
 GHDL      ?= ghdl
